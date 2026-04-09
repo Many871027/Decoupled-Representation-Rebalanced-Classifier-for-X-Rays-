@@ -1,23 +1,5 @@
-# Dataset / Data
-chest_xray/
-pdf_output.txt
-
-# Virtual Environments
-venv/
 xray_env/
-.env
-env/
-
-# MLFlow & Logs
 mlruns/
-*.log
-
-# Python Cache
+*.db
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
-
-# Agent and temporary files
-.agents/
 .ipynb_checkpoints/
