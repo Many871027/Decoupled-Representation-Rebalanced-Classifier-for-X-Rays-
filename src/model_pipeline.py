@@ -18,7 +18,7 @@ def build_custom_cnn_backbone(input_shape=(IMG_HEIGHT, IMG_WIDTH, CHANNELS)):
         x = layers.RandomFlip("horizontal")(x)
     x = layers.RandomRotation(AUG_ROTATION)(x)
     x = layers.RandomZoom(AUG_ZOOM)(x)
-    x = layers.RandomTranslation(height_shift=AUG_SHIFT, width_shift=AUG_SHIFT)(x)
+    x = layers.RandomTranslation(height_factor=AUG_SHIFT, width_factor=AUG_SHIFT)(x)
 
     # Block 1
     x = layers.Conv2D(32, (3, 3), padding='same', activation='relu')(x)
