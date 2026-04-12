@@ -63,7 +63,7 @@ for idx, (dropout, lr) in enumerate(itertools.product(grid_dropouts, grid_lr)):
         medical_report = MedicalReportCallback(val_ds)
 
         # Using FocalLoss defined in model_pipeline Custom function
-        model.compile(optimizer=optimizer, loss=FocalLoss(), metrics=[tf.keras.metrics.F1Score(average='macro', name='f1_score'), 'accuracy'])
+        model.compile(optimizer=optimizer, loss=FocalLoss(), metrics=['accuracy'])
 
         print(f"\n--- Iniciando Run: {run_name} ---")
 
