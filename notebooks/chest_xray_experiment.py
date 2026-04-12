@@ -10,7 +10,7 @@ import mlflow
 import tensorflow as tf
 from src.config import EXPERIMENT_NAME, MLFLOW_TRACKING_URI, BATCH_SIZE
 from src.data_pipeline import get_dataloaders
-from src.model_pipeline import build_custom_cnn_backbone, build_full_model, FocalLoss, set_phase_2
+from src.model_pipeline import build_custom_cnn_backbone, build_full_model, FocalLoss, set_phase_2, MedicalReportCallback
 
 # Initialize MLFlow
 mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
@@ -49,30 +49,45 @@ for idx, (dropout, lr) in enumerate(itertools.product(grid_dropouts, grid_lr)):
         
         # Optimizer & Compile
         optimizer = tf.keras.optimizers.Adam(learning_rate=lr)
+
+        # --- Implementación de ReduceLROnPlateau ---
+        lr_reducer = tf.keras.callbacks.ReduceLROnPlateau(
+            monitor='val_loss',
+            factor=0.2,
+            patience=3,
+            min_lr=1e-6,
+            verbose=1
+        )
+
+        # Report Callback for Medical Metrics (F1-Score)
+        medical_report = MedicalReportCallback(val_ds)
+
         # Using FocalLoss defined in model_pipeline Custom function
-        model.compile(optimizer=optimizer, loss=FocalLoss(), metrics=['accuracy'])
-        
+        model.compile(optimizer=optimizer, loss=FocalLoss(), metrics=[tf.keras.metrics.F1Score(average='macro', name='f1_score'), 'accuracy'])
+
         print(f"\n--- Iniciando Run: {run_name} ---")
-        
-        # Entrenamiento Fase 1 (Limitado a 3 epocas para demostracion de Grid Search rapida)
-        # Para desarrollo real se recomiendan 20 epocas con EarlyStopping
+
+        # Entrenamiento Optimizado (20 épocas con reducción de LR)
         history = model.fit(
             train_ds,
             validation_data=val_ds,
-            epochs=3,
+            epochs=20,
+            callbacks=[lr_reducer, medical_report],
             verbose=1
         )
         
         # Log Metrics
         val_acc = history.history['val_accuracy'][-1]
         val_loss = history.history['val_loss'][-1]
-        
+        val_f1 = history.history.get('val_f1_score', [0])[-1]
+
         mlflow.log_metric("val_accuracy", val_acc)
         mlflow.log_metric("val_loss", val_loss)
-        
-        # Opcional: Model Signature y artefactos 
+        mlflow.log_metric("val_f1_score", val_f1)
+
+        # Opcional: Model Signature y artefactos
         # mlflow.tensorflow.log_model(model, artifact_path="model")
-        print(f"[{run_name}] Val Acc: {val_acc:.4f} - Logged to MLflow")
+        print(f"[{run_name}] Val Acc: {val_acc:.4f} - Val F1: {val_f1:.4f} - Logged to MLflow")
 
 # %% [markdown]
 # ### Phase 2: Desacople y Fine-Tuning

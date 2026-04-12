@@ -11,11 +11,11 @@ MLRUNS_DIR = BASE_DIR / "mlruns"
 MODELS_DIR.mkdir(parents=True, exist_ok=True)
 MLRUNS_DIR.mkdir(parents=True, exist_ok=True)
 
-# Training Hyperparameters (Senior Setup VRAM constrained)
-IMG_HEIGHT = 256
-IMG_WIDTH = 256
+# Training Hyperparameters (Colab GPU Optimized Setup)
+IMG_HEIGHT = 512
+IMG_WIDTH = 512
 CHANNELS = 1 # X-Rays are grayscale, taking 1 channel saves 3x VRAM
-BATCH_SIZE = 16 # Low batch size for 3GB VRAM safety
+BATCH_SIZE = 64 # Optimized for Colab T4 GPU (16GB VRAM)
 
 # Classes
 CLASS_NAMES = ['COVID', 'NEUMONIA', 'NORMALL']
@@ -24,6 +24,12 @@ NUM_CLASSES = len(CLASS_NAMES)
 # Focal Loss Parameters
 FOCAL_GAMMA = 2.0
 FOCAL_ALPHA = 0.25
+
+# Augmentation Parameters (Medical-Safe)
+AUG_ROTATION = 0.027
+AUG_ZOOM = 0.1
+AUG_SHIFT = 0.1
+AUG_FLIP_H = True
 
 # MLFlow
 MLFLOW_TRACKING_URI = f"sqlite:///{MLRUNS_DIR}/mlflow.db"

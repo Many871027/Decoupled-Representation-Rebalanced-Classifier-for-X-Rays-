@@ -54,13 +54,14 @@ def create_stratified_splits(paths, labels, test_size=0.15, val_size=0.15):
 
 def tf_parse_image(file_path, label):
     """
-    Decodifica y redimensiona la imagen. Adapta escala a 0-1.
-    Usa escalas de grises para ahorrar VRAM.
+    Decodifica y redimensiona la imagen.
+    Adapta escala a 0-1. Usa escalas de grises para ahorrar VRAM.
     """
     img = tf.io.read_file(file_path)
     img = tf.image.decode_jpeg(img, channels=CHANNELS)
     img = tf.image.convert_image_dtype(img, tf.float32)
     img = tf.image.resize(img, [IMG_HEIGHT, IMG_WIDTH])
+
     return img, label
 
 def get_dataloaders(params=None):
