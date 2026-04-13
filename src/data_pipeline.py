@@ -12,7 +12,7 @@ def get_image_paths_and_labels():
     labels = []
     
     for label_idx, class_name in enumerate(CLASS_NAMES):
-        class_dir = DATA_DIR / class_name
+        class_dir = Path(DATA_DIR) / class_name
         if not class_dir.exists():
             continue
             
