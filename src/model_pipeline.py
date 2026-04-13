@@ -1,6 +1,5 @@
 import tensorflow as tf
 from tensorflow.keras import layers, models
-from tensorflow.keras import layers, models
 import src.config as config
 import numpy as np
 from sklearn.metrics import classification_report, f1_score
@@ -56,7 +55,9 @@ def build_full_model(backbone, dropout_rate=0.5):
     # Classifier Head
     x = layers.Dense(128, activation='relu', name='classifier_dense_1')(x)
     x = layers.Dropout(dropout_rate)(x)
-    outputs = layers.Dense(config.NUM_CLASSES, activation='softmax', name='classifier_output')(x)
+    # dtype='float32' obligatorio: bajo mixed_bfloat16, softmax DEBE operar en precisión completa
+    # para evitar NaN en gradientes de Focal Loss por truncamiento de probabilidades
+    outputs = layers.Dense(config.NUM_CLASSES, activation='softmax', name='classifier_output', dtype='float32')(x)
     
     model = tf.keras.Model(inputs, outputs, name="chest_xray_model")
     return model
