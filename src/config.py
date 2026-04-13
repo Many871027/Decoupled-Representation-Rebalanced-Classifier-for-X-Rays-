@@ -23,7 +23,7 @@ NUM_CLASSES = len(CLASS_NAMES)
 
 # Focal Loss Parameters
 FOCAL_GAMMA = 2.0
-FOCAL_ALPHA = 0.25
+FOCAL_ALPHA = 0.5
 
 # Augmentation Parameters (Medical-Safe)
 AUG_ROTATION = 0.027
