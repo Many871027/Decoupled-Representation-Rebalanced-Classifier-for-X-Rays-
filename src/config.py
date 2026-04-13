@@ -28,7 +28,7 @@ FOCAL_ALPHA = 0.5
 # Augmentation Parameters (Medical-Safe)
 AUG_ROTATION = 0.027
 AUG_ZOOM = 0.1
-AUG_SHIFT = 0.1
+AUG_SHIFT = 0.05
 AUG_FLIP_H = True
 
 # MLFlow

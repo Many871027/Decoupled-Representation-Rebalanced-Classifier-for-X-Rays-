@@ -39,7 +39,7 @@ for idx, (dropout, lr) in enumerate(itertools.product(grid_dropouts, grid_lr)):
             "learning_rate": lr,
             "batch_size": BATCH_SIZE,
             "focal_gamma": 2.0,
-            "focal_alpha": 0.25,
+            "focal_alpha": 0.5,
             "phase": "Phase 1 - Fully Trainable Dropout Tuning"
         })
         
@@ -59,6 +59,15 @@ for idx, (dropout, lr) in enumerate(itertools.product(grid_dropouts, grid_lr)):
             verbose=1
         )
 
+        # --- Implementación de EarlyStopping ---
+        early_stopping = tf.keras.callbacks.EarlyStopping(
+            monitor='val_f1_score',
+            mode='max',
+            patience=8,
+            restore_best_weights=True,
+            verbose=1
+        )
+
         # Report Callback for Medical Metrics (F1-Score)
         medical_report = MedicalReportCallback(val_ds)
 
@@ -67,12 +76,12 @@ for idx, (dropout, lr) in enumerate(itertools.product(grid_dropouts, grid_lr)):
 
         print(f"\n--- Iniciando Run: {run_name} ---")
 
-        # Entrenamiento Optimizado (20 épocas con reducción de LR)
+        # Entrenamiento Optimizado (50 épocas con EarlyStopping)
         history = model.fit(
             train_ds,
             validation_data=val_ds,
-            epochs=20,
-            callbacks=[lr_reducer, medical_report],
+            epochs=50,
+            callbacks=[lr_reducer, medical_report, early_stopping],
             verbose=1
         )
         
