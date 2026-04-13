@@ -1,24 +1,25 @@
 import tensorflow as tf
 from tensorflow.keras import layers, models
-from src.config import NUM_CLASSES, IMG_HEIGHT, IMG_WIDTH, CHANNELS, FOCAL_GAMMA, FOCAL_ALPHA, AUG_ROTATION, AUG_ZOOM, AUG_SHIFT, AUG_FLIP_H
+from tensorflow.keras import layers, models
+import src.config as config
 import numpy as np
 from sklearn.metrics import classification_report, f1_score
 
-def build_custom_cnn_backbone(input_shape=(IMG_HEIGHT, IMG_WIDTH, CHANNELS)):
+def build_custom_cnn_backbone():
     """
     Construye la arquitectura base convolucional (Feature Extractor).
     Se usa padding = 'same' y BatchNormalization para estabilidad.
     """
-    inputs = tf.keras.Input(shape=input_shape)
+    inputs = tf.keras.Input(shape=(config.IMG_HEIGHT, config.IMG_WIDTH, config.CHANNELS))
 
     # --- Medical-Safe Augmentation Block ---
     # This block only operates during training
     x = inputs
-    if AUG_FLIP_H:
+    if config.AUG_FLIP_H:
         x = layers.RandomFlip("horizontal")(x)
-    x = layers.RandomRotation(AUG_ROTATION)(x)
-    x = layers.RandomZoom(AUG_ZOOM)(x)
-    x = layers.RandomTranslation(height_factor=AUG_SHIFT, width_factor=AUG_SHIFT, fill_mode='constant')(x)
+    x = layers.RandomRotation(config.AUG_ROTATION)(x)
+    x = layers.RandomZoom(config.AUG_ZOOM)(x)
+    x = layers.RandomTranslation(height_factor=config.AUG_SHIFT, width_factor=config.AUG_SHIFT, fill_mode='constant')(x)
 
     # Block 1
     x = layers.Conv2D(32, (3, 3), padding='same', activation='relu')(x)
@@ -55,7 +56,7 @@ def build_full_model(backbone, dropout_rate=0.5):
     # Classifier Head
     x = layers.Dense(128, activation='relu', name='classifier_dense_1')(x)
     x = layers.Dropout(dropout_rate)(x)
-    outputs = layers.Dense(NUM_CLASSES, activation='softmax', name='classifier_output')(x)
+    outputs = layers.Dense(config.NUM_CLASSES, activation='softmax', name='classifier_output')(x)
     
     model = tf.keras.Model(inputs, outputs, name="chest_xray_model")
     return model
@@ -65,10 +66,10 @@ class FocalLoss(tf.keras.losses.Loss):
     Custom Focal Loss (Sparse Categorical CrossEntropy base).
     Penaliza errores en clases dificiles (como la clase minoritaria COVID).
     """
-    def __init__(self, gamma=FOCAL_GAMMA, alpha=FOCAL_ALPHA, **kwargs):
+    def __init__(self, gamma=None, alpha=None, **kwargs):
         super().__init__(**kwargs)
-        self.gamma = gamma
-        self.alpha = alpha
+        self.gamma = gamma if gamma is not None else config.FOCAL_GAMMA
+        self.alpha = alpha if alpha is not None else config.FOCAL_ALPHA
 
     def call(self, y_true, y_pred):
         # Aseguramos que y_pred no sea exactamente 0 ni 1
@@ -79,7 +80,7 @@ class FocalLoss(tf.keras.losses.Loss):
 
         # Gather probabilities of the true classes
         # create one-hot representation to multiply
-        y_true_one_hot = tf.one_hot(tf.cast(y_true, tf.int32), depth=NUM_CLASSES)
+        y_true_one_hot = tf.one_hot(tf.cast(y_true, tf.int32), depth=config.NUM_CLASSES)
         p_t = tf.reduce_sum(y_true_one_hot * y_pred, axis=-1)
 
         # Focal Loss formula: -alpha * (1 - p_t)**gamma * log(p_t)
@@ -107,8 +108,7 @@ class MedicalReportCallback(tf.keras.callbacks.Callback):
             all_labels.extend(labels.numpy() if hasattr(labels, 'numpy') else labels)
 
         # Generar reporte de sklearn
-        from src.config import CLASS_NAMES
-        report = classification_report(all_labels, all_preds, target_names=CLASS_NAMES)
+        report = classification_report(all_labels, all_preds, target_names=config.CLASS_NAMES)
 
         macro_f1 = f1_score(all_labels, all_preds, average='macro')
 

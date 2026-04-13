@@ -2,7 +2,7 @@ import os
 import tensorflow as tf
 from sklearn.model_selection import StratifiedShuffleSplit
 from pathlib import Path
-from src.config import DATA_DIR, CLASS_NAMES, IMG_HEIGHT, IMG_WIDTH, CHANNELS, BATCH_SIZE
+import src.config as config
 
 def get_image_paths_and_labels():
     """
@@ -11,8 +11,8 @@ def get_image_paths_and_labels():
     paths = []
     labels = []
     
-    for label_idx, class_name in enumerate(CLASS_NAMES):
-        class_dir = Path(DATA_DIR) / class_name
+    for label_idx, class_name in enumerate(config.CLASS_NAMES):
+        class_dir = Path(config.DATA_DIR) / class_name
         if not class_dir.exists():
             continue
             
@@ -58,9 +58,9 @@ def tf_parse_image(file_path, label):
     Adapta escala a 0-1. Usa escalas de grises para ahorrar VRAM.
     """
     img = tf.io.read_file(file_path)
-    img = tf.image.decode_jpeg(img, channels=CHANNELS)
+    img = tf.image.decode_jpeg(img, channels=config.CHANNELS)
     img = tf.image.convert_image_dtype(img, tf.float32)
-    img = tf.image.resize(img, [IMG_HEIGHT, IMG_WIDTH])
+    img = tf.image.resize(img, [config.IMG_HEIGHT, config.IMG_WIDTH])
 
     return img, label
 
@@ -69,7 +69,7 @@ def get_dataloaders(params=None):
     Retorna Datasets asincronos de tf.data para entrenamiento pesado en cpu 
     sin bloquear la GPU.
     """
-    batch_size = params.get('batch_size', BATCH_SIZE) if params else BATCH_SIZE
+    batch_size = params.get('batch_size', config.BATCH_SIZE) if params else config.BATCH_SIZE
     
     paths, labels = get_image_paths_and_labels()
     
